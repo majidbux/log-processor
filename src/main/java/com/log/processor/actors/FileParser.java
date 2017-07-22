@@ -24,6 +24,10 @@ public class FileParser extends AbstractLoggingActor {
 
 	private final Path filePath;
 
+	public Path getFilePath() {
+		return filePath;
+	}
+
 	public FileParser(Path path) {
 		this.filePath = path;
 	}
@@ -31,7 +35,7 @@ public class FileParser extends AbstractLoggingActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(Parse.class, this::onParse)
-				.matchAny(otherMessage -> log().info("received unknown message {}", otherMessage)).build();
+				.matchAny(otherMessage -> getSender().tell("Unrecognized message", getSelf())).build();
 	}
 
 	private void onParse(Parse message) throws IOException {
@@ -50,7 +54,7 @@ public class FileParser extends AbstractLoggingActor {
 		try (Stream<String> stream = Files.lines(filePath)) {
 			stream.forEach(line -> context().system().eventStream().publish(new Line(this.filePath, line)));
 		} catch (IOException e) {
-			throw new IOException("Error: " + e.getMessage());
+			throw new IOException("Unable to read file " + this.filePath);
 		}
 		context().system().eventStream().publish(new EndOfFile(this.filePath));
 	}

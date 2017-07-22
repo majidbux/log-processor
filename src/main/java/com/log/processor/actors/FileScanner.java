@@ -31,7 +31,7 @@ public class FileScanner extends AbstractLoggingActor {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder().match(Scan.class, this::onScan)
-							  .matchAny(otherMessage -> log().info("received unknown message {}", otherMessage)).build();
+							  .matchAny(otherMessage -> getSender().tell(("Unrecognized message"), getSelf())).build();
 	
 	}
 	
@@ -53,6 +53,10 @@ public class FileScanner extends AbstractLoggingActor {
 			fileParser.tell(new Parse(), ActorRef.noSender());
 			fileCount++;
 		}
+	}
+
+	public String getDirectoryAddress() {
+		return directoryAddress;
 	}
 
 	public static Props props(String directoryAddress) {

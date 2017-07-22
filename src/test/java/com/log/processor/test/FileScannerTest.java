@@ -47,24 +47,42 @@ public class FileScannerTest {
 		Assert.assertEquals(props.actorClass(), FileScanner.class);
 	}
 
-	
-	@Test(expected = IOException.class)
-	public void testOnInvalidDirectory() {
-		final Props props = Props.create(FileScanner.class, "directoryToScan");
-		final TestActorRef<FileScanner> ref = TestActorRef.create(system, props, "file-scanner-1");
-		Scan scanMessage = new Scan();
-		ref.receive(scanMessage, ActorRef.noSender());
+	@Test
+	public void testUnRecognizedMessage() {
+		final TestProbe probe = new TestProbe(system);
+		final Props props = Props.create(FileScanner.class, tempFolder.getRoot().getAbsolutePath());
+		final ActorRef fileScanner = system.actorOf(props, "file-scanner-1");
+		fileScanner.tell("Hi", probe.ref());
+		probe.expectMsg("Unrecognized message");
+	}
+
+	@Test
+	public void testDirectoryIsSame() {
+		final Props props = Props.create(FileScanner.class, tempFolder.getRoot().getAbsolutePath());
+		final TestActorRef<FileScanner> ref = TestActorRef.create(system, props, "file-scanner-2");
+		Assert.assertEquals(ref.underlyingActor().getDirectoryAddress(),tempFolder.getRoot().getAbsolutePath());
+
 	}
 	
 	@Test
-	public void testOnValidDirectory() {
-		  final TestProbe probe = new TestProbe(system);
-		  final Props props = Props.create(FileScanner.class,tempFolder.getRoot().getAbsolutePath());
-		  final ActorRef fileScanner = system.actorOf(props, "file-scanner-2");
-		  fileScanner.tell(new Scan(), ActorRef.noSender());
-		  probe.expectNoMsg();
+	public void testOnInvalidDirectory() {
+		final Props props = Props.create(FileScanner.class, "directoryToScan");
+		final TestActorRef<FileScanner> ref = TestActorRef.create(system, props, "file-scanner-3");
+		Scan scanMessage = new Scan();
+		try {
+			ref.receive(scanMessage, ActorRef.noSender());
+		} catch (Exception e) {
+			Assert.assertEquals(e.getMessage(), "Unable to read directory: directoryToScan");
+		}
 	}
 
-
+	@Test
+	public void testOnValidDirectory() {
+		final TestProbe probe = new TestProbe(system);
+		final Props props = Props.create(FileScanner.class, tempFolder.getRoot().getAbsolutePath());
+		final ActorRef fileScanner = system.actorOf(props, "file-scanner-4");
+		fileScanner.tell(new Scan(), ActorRef.noSender());
+		probe.expectNoMsg();
+	}
 
 }

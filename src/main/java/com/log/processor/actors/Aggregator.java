@@ -19,6 +19,7 @@ public class Aggregator extends AbstractLoggingActor {
 
 	private int wordsCount = 0;
 
+	
 	public Aggregator(Path filePath) {
 		this.filePath = filePath;
 	}
@@ -50,6 +51,15 @@ public class Aggregator extends AbstractLoggingActor {
 				wordsCount = wordsCount + event.getLine().split(" ").length;
 			}
 		}
+	}
+
+	public int getWordsCount() {
+		return wordsCount;
+	}
+
+	
+	public Path getFilePath() {
+		return filePath;
 	}
 
 	public static Props props(Path filePath) {
